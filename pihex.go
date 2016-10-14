@@ -10,17 +10,27 @@ const (
 )
 
 func Digit(n int64) byte {
+	seriesResult1 := make(chan float64)
+	seriesResult2 := make(chan float64)
+	seriesResult3 := make(chan float64)
+	seriesResult4 := make(chan float64)
+
+	go series(n, 1, seriesResult1)
+	go series(n, 4, seriesResult2)
+	go series(n, 5, seriesResult3)
+	go series(n, 6, seriesResult4)
+
 	digit :=
-		(4.0 * series(n, 1)) -
-			(2.0 * series(n, 4)) -
-			series(n, 5) -
-			series(n, 6)
+		(4.0 * <-seriesResult1) -
+			(2.0 * <-seriesResult2) -
+			<-seriesResult3 -
+			<-seriesResult4
 
 	digit = digit - math.Floor(digit) + 1.0
 	return byte(math.Floor(16.0*math.Remainder(digit, 1.0))) & 0x0f
 }
 
-func series(n, magic_constant int64) float64 {
+func series(n, magic_constant int64, result chan<- float64) {
 	acc := 0.0
 
 	{
@@ -50,5 +60,5 @@ func series(n, magic_constant int64) float64 {
 		}
 	}
 
-	return acc
+	result <- acc
 }
