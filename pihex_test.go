@@ -1,6 +1,7 @@
 package pihex
 
 import (
+	"bytes"
 	"encoding/hex"
 	"testing"
 )
@@ -11,19 +12,10 @@ const (
 	Digits99950To99999OfPi = "443388751069558b3e62e612bc302ec487aa9a6ea22673c1a5"
 )
 
-func testDigitRange(rangeStart, span int, expectedHexStr string, t *testing.T) {
-	digitBuf := make([]byte, span/2)
-
-	for n := rangeStart; n < rangeStart+span; n++ {
-		i := (n - rangeStart) / 2
-		if (n % 2) == 0 {
-			digitBuf[i] = Digit(int64(n)) << 4
-		} else {
-			digitBuf[i] = digitBuf[i] | Digit(int64(n))
-		}
-	}
-
-	resultString := hex.EncodeToString(digitBuf)
+func testDigitRange(rangeStart, span int64, expectedHexStr string, t *testing.T) {
+	var digitBuf bytes.Buffer
+	DigitRange(rangeStart, span, &digitBuf)
+	resultString := hex.EncodeToString(digitBuf.Bytes())
 
 	if resultString != expectedHexStr {
 		t.Errorf("Expected %s, got %s", expectedHexStr, resultString)
@@ -40,4 +32,25 @@ func TestDigits49950To49999(t *testing.T) {
 
 func TestDigits99950To99999(t *testing.T) {
 	testDigitRange(99950, 50, Digits99950To99999OfPi, t)
+}
+
+func TestDigitRangeErrors(t *testing.T) {
+	var digitBuf bytes.Buffer
+	err := DigitRange(-1, 2, &digitBuf)
+
+	if err == nil {
+		t.Errorf("Expected an error when index < 0")
+	}
+
+	err = DigitRange(0, 1, &digitBuf)
+
+	if err == nil {
+		t.Errorf("Expected an error when span < 2")
+	}
+
+	err = DigitRange(0, 3, &digitBuf)
+
+	if err == nil {
+		t.Errorf("Expected an error when span odd")
+	}
 }

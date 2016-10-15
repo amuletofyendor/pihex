@@ -1,6 +1,9 @@
 package pihex
 
 import (
+	"encoding/binary"
+	"errors"
+	"io"
 	"math"
 	"math/big"
 )
@@ -9,6 +12,33 @@ const (
 	PrecisionCutoff = 1.0e-17
 	SubRanges       = 8
 )
+
+func DigitRange(index, span int64, w io.Writer) error {
+	curByte := byte(0)
+
+	if index < 0 {
+		return errors.New("index must be >= 0")
+	}
+
+	if span < 2 {
+		return errors.New("span must be 2 or higher")
+	}
+
+	if span%2 == 1 {
+		return errors.New("span must be even")
+	}
+
+	for n := index; n < index+span; n++ {
+		if (n % 2) == 0 {
+			curByte = Digit(n) << 4
+		} else {
+			curByte = curByte | Digit(n)
+			binary.Write(w, binary.LittleEndian, curByte)
+		}
+	}
+
+	return nil
+}
 
 func Digit(n int64) byte {
 	seriesResult1 := make(chan float64)
